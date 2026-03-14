@@ -94,7 +94,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile, mobileOpen, onC
                 fontFamily: 'var(--font-heading)', fontWeight: 700,
                 fontSize: 'var(--font-size-lg)',
                 color: 'var(--color-text-primary)',
-              }}>StockFlow</span>
+              }}>CoreInventory</span>
             </div>
           ) : (
             <div style={{

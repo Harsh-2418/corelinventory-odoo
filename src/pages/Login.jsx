@@ -90,7 +90,7 @@ export default function Login() {
             fontFamily: 'var(--font-heading)', marginBottom: 6,
           }}>Welcome back</h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>
-            Sign in to StockFlow IMS
+            Sign in to CoreInventory IMS
           </p>
         </div>
 

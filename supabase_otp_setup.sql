@@ -1,5 +1,5 @@
 -- =============================================
--- StockFlow IMS: Password Reset OTP Setup
+-- CoreInventory IMS: Password Reset OTP Setup
 -- Run this ONCE in your Supabase SQL Editor
 -- Dashboard → SQL Editor → New Query → Paste → Run
 -- =============================================

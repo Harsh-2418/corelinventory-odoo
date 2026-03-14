@@ -26,7 +26,7 @@ export async function sendOtpEmail(toEmail, otpCode) {
         template_params: {
           to_email: toEmail,
           otp_code: otpCode,
-          app_name: 'StockFlow IMS',
+          app_name: 'CoreInventory IMS',
         },
       }),
     });
