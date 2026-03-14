@@ -34,12 +34,12 @@ export default function ResetPassword() {
     }, 800);
   }
 
-  function handleVerifyOTP(e) {
+  async function handleVerifyOTP(e) {
     e.preventDefault();
     setError('');
     setSuccess('');
     if (!otp) { setError('Please enter the OTP'); return; }
-    const result = verifyOTP(email, otp);
+    const result = await verifyOTP(email, otp);
     if (result.success) {
       setStep(3);
       setSuccess('OTP verified!');
@@ -48,14 +48,14 @@ export default function ResetPassword() {
     }
   }
 
-  function handleResetPassword(e) {
+  async function handleResetPassword(e) {
     e.preventDefault();
     setError('');
     setSuccess('');
     if (!newPassword || !confirmPassword) { setError('Please fill in all fields'); return; }
     if (newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
-    const result = resetPassword(email, newPassword);
+    const result = await resetPassword(email, newPassword, otp);
     if (result.success) {
       setSuccess('Password reset successfully! Redirecting to login...');
       setTimeout(() => navigate('/login'), 1500);
