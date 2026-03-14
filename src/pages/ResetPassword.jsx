@@ -21,8 +21,8 @@ export default function ResetPassword() {
     setError('');
     if (!email) { setError('Please enter your email'); return; }
     setLoading(true);
-    setTimeout(() => {
-      const result = requestOTP(email);
+    setTimeout(async () => {
+      const result = await requestOTP(email);
       if (result.success) {
         setGeneratedOtp(result.otp);
         setSuccess(`OTP sent! For demo purposes, your OTP is: ${result.otp}`);
