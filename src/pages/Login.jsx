@@ -86,7 +86,7 @@ export default function Login() {
             <Boxes size={28} color="white" />
           </div>
           <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 4 }}>Welcome back</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>Sign in to StockFlow IMS</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>Sign in to CoreInventory IMS</p>
         </div>
 
         {/* Form */}

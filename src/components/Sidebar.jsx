@@ -109,7 +109,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile, mobileOpen, onC
           </div>
           {showLabels && (
             <div style={{ animation: 'fadeIn 0.2s ease' }}>
-              <div style={{ fontWeight: 700, fontSize: 'var(--font-size-md)', letterSpacing: '-0.02em' }}>StockFlow</div>
+              <div style={{ fontWeight: 700, fontSize: 'var(--font-size-md)', letterSpacing: '-0.02em' }}>CoreInventory</div>
               <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>Inventory System</div>
             </div>
           )}

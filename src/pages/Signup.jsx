@@ -92,7 +92,7 @@ export default function Signup() {
             <Boxes size={28} color="white" />
           </div>
           <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 4 }}>Create Account</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>Get started with StockFlow IMS</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>Get started with CoreInventory IMS</p>
         </div>
 
         <form onSubmit={handleSubmit} className="glass-card" style={{ padding: 32 }}>
