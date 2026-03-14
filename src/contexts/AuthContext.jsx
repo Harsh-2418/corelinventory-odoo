@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { sendOtpEmail, generateOTP } from '../utils/emailService';
 
 const AuthContext = createContext(null);
 
@@ -12,9 +13,7 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [otpData, setOtpData] = useState(null);
 
-  // Check for existing Supabase session on mount
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -52,12 +51,10 @@ export function AuthProvider({ children }) {
       password,
       options: {
         data: { name, role },
-        // Skip email confirmation for hackathon demo
         emailRedirectTo: window.location.origin,
       },
     });
     if (error) return { success: false, error: error.message };
-    // For Supabase with email confirmations disabled, user is auto-confirmed
     if (data.user) {
       setUser({
         id: data.user.id,
@@ -68,7 +65,6 @@ export function AuthProvider({ children }) {
       });
       return { success: true };
     }
-    // If email confirmation is required
     return { success: true, message: 'Check your email to confirm your account' };
   }
 
@@ -92,41 +88,93 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  // =============================================
+  // OTP-based Password Reset (using EmailJS + Supabase RPC)
+  // =============================================
+
+  // Step 1: Generate OTP, store in Supabase table, send via EmailJS
   async function requestOTP(email) {
-    // For hackathon: use Supabase password reset (sends email)
-    // But also keep the demo OTP for cases where email isn't set up
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) {
-      // Fallback to simulated OTP for demo
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      setOtpData({ email, otp, expiresAt: Date.now() + 300000 });
-      return { success: true, otp, simulated: true };
-    }
-    return { success: true, message: 'Password reset email sent' };
-  }
+    try {
+      // Check if user exists first
+      // We do a simple check by trying to find the email
+      const otp = generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min expiry
 
-  function verifyOTP(email, otp) {
-    if (!otpData || otpData.email !== email || otpData.otp !== otp) {
-      return { success: false, error: 'Invalid OTP' };
-    }
-    if (Date.now() > otpData.expiresAt) {
-      return { success: false, error: 'OTP expired' };
-    }
-    return { success: true };
-  }
+      // Store OTP in Supabase table
+      const { error: insertError } = await supabase
+        .from('password_reset_otps')
+        .insert({
+          email: email,
+          otp: otp,
+          expires_at: expiresAt,
+        });
 
-  async function resetPassword(email, newPassword) {
-    // If using Supabase auth flow, updateUser works after email link
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      // Fallback: just clear OTP for demo
-      setOtpData(null);
+      if (insertError) {
+        console.error('OTP insert error:', insertError);
+        return { success: false, error: `OTP Error: ${insertError.message || insertError.code || 'Table may not exist. Run supabase_otp_setup.sql first.'}` };
+      }
+
+      // Send OTP via EmailJS
+      const emailResult = await sendOtpEmail(email, otp);
+      if (!emailResult.success) {
+        return { success: false, error: emailResult.error || 'Failed to send OTP email.' };
+      }
+
       return { success: true };
+    } catch (err) {
+      console.error('requestOTP error:', err);
+      return { success: false, error: 'An error occurred. Please try again.' };
     }
-    setOtpData(null);
-    return { success: true };
+  }
+
+  // Step 2: Verify OTP against Supabase table
+  async function verifyOTP(email, otpCode) {
+    try {
+      const { data, error } = await supabase
+        .from('password_reset_otps')
+        .select('*')
+        .eq('email', email)
+        .eq('otp', otpCode)
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        return { success: false, error: 'Invalid or expired OTP. Please try again.' };
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Verification failed. Please try again.' };
+    }
+  }
+
+  // Step 3: Reset password using Supabase RPC function
+  async function resetPassword(email, newPassword, otpCode) {
+    try {
+      const { data, error } = await supabase.rpc('handle_password_reset', {
+        user_email: email,
+        new_pass: newPassword,
+        otp_code: otpCode,
+      });
+
+      if (error) {
+        console.error('Password reset RPC error:', error);
+        return { success: false, error: `Reset failed: ${error.message || error.code || JSON.stringify(error)}` };
+      }
+
+      // The RPC returns a JSON object { success: bool, error?: string }
+      if (data && data.success === false) {
+        return { success: false, error: data.error || 'Password reset failed.' };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('resetPassword error:', err);
+      return { success: false, error: 'An error occurred. Please try again.' };
+    }
   }
 
   async function updateProfile(updates) {

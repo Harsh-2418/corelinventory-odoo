@@ -415,6 +415,32 @@ export function InventoryProvider({ children }) {
           break;
         }
 
+        // ── Cancel actions ──
+        case 'CANCEL_RECEIPT': {
+          const receipt = receipts.find(r => r.id === action.payload);
+          if (!receipt || receipt.status === 'done' || receipt.status === 'canceled') break;
+          await supabase.from('receipts').update({ status: 'canceled' }).eq('id', action.payload);
+          break;
+        }
+        case 'CANCEL_DELIVERY': {
+          const delivery = deliveries.find(d => d.id === action.payload);
+          if (!delivery || delivery.status === 'done' || delivery.status === 'canceled') break;
+          await supabase.from('deliveries').update({ status: 'canceled' }).eq('id', action.payload);
+          break;
+        }
+        case 'CANCEL_TRANSFER': {
+          const transfer = transfers.find(t => t.id === action.payload);
+          if (!transfer || transfer.status === 'done' || transfer.status === 'canceled') break;
+          await supabase.from('transfers').update({ status: 'canceled' }).eq('id', action.payload);
+          break;
+        }
+        case 'CANCEL_ADJUSTMENT': {
+          const adj = adjustments.find(a => a.id === action.payload);
+          if (!adj || adj.status === 'done' || adj.status === 'canceled') break;
+          await supabase.from('adjustments').update({ status: 'canceled' }).eq('id', action.payload);
+          break;
+        }
+
         default:
           console.warn('Unknown action type:', action.type);
           return;

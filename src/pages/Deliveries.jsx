@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../contexts/InventoryContext';
-import { Plus, Truck, CheckCircle } from 'lucide-react';
+import { Plus, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { formatDate, getStatusLabel } from '../utils/helpers';
 
 export default function Deliveries() {
@@ -19,6 +19,13 @@ export default function Deliveries() {
     e.stopPropagation();
     if (confirm('Validate this delivery? Stock will be decreased automatically.')) {
       inv.dispatch({ type: 'VALIDATE_DELIVERY', payload: id });
+    }
+  }
+
+  function handleCancel(e, id) {
+    e.stopPropagation();
+    if (confirm('Cancel this delivery? This action cannot be undone.')) {
+      inv.dispatch({ type: 'CANCEL_DELIVERY', payload: id });
     }
   }
 
@@ -76,9 +83,14 @@ export default function Deliveries() {
                   <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>{d.validatedAt ? formatDate(d.validatedAt) : '—'}</td>
                   <td>
                     {d.status !== 'done' && d.status !== 'canceled' && (
-                      <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, d.id)}>
-                        <CheckCircle size={14} /> Validate
-                      </button>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, d.id)}>
+                          <CheckCircle size={14} /> Validate
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={(e) => handleCancel(e, d.id)}>
+                          <XCircle size={14} /> Cancel
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

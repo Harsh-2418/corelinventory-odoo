@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useInventory } from '../contexts/InventoryContext';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { generateId } from '../utils/helpers';
 
 export default function AdjustmentForm() {
@@ -106,6 +106,13 @@ export default function AdjustmentForm() {
     }
   }
 
+  function handleCancel() {
+    if (confirm('Cancel this adjustment? This action cannot be undone.')) {
+      inv.dispatch({ type: 'CANCEL_ADJUSTMENT', payload: id });
+      navigate('/adjustments');
+    }
+  }
+
   return (
     <div className="page-content">
       <div className="page-header">
@@ -116,10 +123,15 @@ export default function AdjustmentForm() {
             <div className="page-subtitle">{isView ? 'Completed adjustment' : 'Correct stock based on physical count'}</div>
           </div>
         </div>
-        {existing && existing.status !== 'done' && (
-          <button className="btn btn-success" onClick={handleValidate}>
-            <CheckCircle size={18} /> Validate Adjustment
-          </button>
+        {existing && existing.status !== 'done' && existing.status !== 'canceled' && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-success" onClick={handleValidate}>
+              <CheckCircle size={18} /> Validate Adjustment
+            </button>
+            <button className="btn btn-danger" onClick={handleCancel}>
+              <XCircle size={18} /> Cancel Request
+            </button>
+          </div>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../contexts/InventoryContext';
-import { Plus, ShoppingCart, CheckCircle } from 'lucide-react';
+import { Plus, ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
 import { formatDate, getStatusLabel } from '../utils/helpers';
 
 export default function Receipts() {
@@ -19,6 +19,13 @@ export default function Receipts() {
     e.stopPropagation();
     if (confirm('Validate this receipt? Stock will be updated automatically.')) {
       inv.dispatch({ type: 'VALIDATE_RECEIPT', payload: id });
+    }
+  }
+
+  function handleCancel(e, id) {
+    e.stopPropagation();
+    if (confirm('Cancel this receipt? This action cannot be undone.')) {
+      inv.dispatch({ type: 'CANCEL_RECEIPT', payload: id });
     }
   }
 
@@ -76,9 +83,14 @@ export default function Receipts() {
                   <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>{r.validatedAt ? formatDate(r.validatedAt) : '—'}</td>
                   <td>
                     {r.status !== 'done' && r.status !== 'canceled' && (
-                      <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, r.id)}>
-                        <CheckCircle size={14} /> Validate
-                      </button>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, r.id)}>
+                          <CheckCircle size={14} /> Validate
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={(e) => handleCancel(e, r.id)}>
+                          <XCircle size={14} /> Cancel
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
