@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../contexts/InventoryContext';
-import { Plus, ArrowLeftRight, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, ArrowLeftRight, CheckCircle } from 'lucide-react';
 import { formatDate, getStatusLabel } from '../utils/helpers';
 
 export default function Transfers() {
@@ -19,13 +19,6 @@ export default function Transfers() {
     e.stopPropagation();
     if (confirm('Validate this transfer? Stock will be moved between locations.')) {
       inv.dispatch({ type: 'VALIDATE_TRANSFER', payload: id });
-    }
-  }
-
-  function handleCancel(e, id) {
-    e.stopPropagation();
-    if (confirm('Cancel this transfer? This action cannot be undone.')) {
-      inv.dispatch({ type: 'CANCEL_TRANSFER', payload: id });
     }
   }
 
@@ -81,14 +74,9 @@ export default function Transfers() {
                   <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>{formatDate(t.createdAt)}</td>
                   <td>
                     {t.status !== 'done' && t.status !== 'canceled' && (
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, t.id)}>
-                          <CheckCircle size={14} /> Validate
-                        </button>
-                        <button className="btn btn-danger btn-sm" onClick={(e) => handleCancel(e, t.id)}>
-                          <XCircle size={14} /> Cancel
-                        </button>
-                      </div>
+                      <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, t.id)}>
+                        <CheckCircle size={14} /> Validate
+                      </button>
                     )}
                   </td>
                 </tr>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useInventory } from '../contexts/InventoryContext';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { generateId } from '../utils/helpers';
 
 export default function ReceiptForm() {
@@ -87,13 +87,6 @@ export default function ReceiptForm() {
     }
   }
 
-  function handleCancel() {
-    if (confirm('Cancel this receipt? This action cannot be undone.')) {
-      inv.dispatch({ type: 'CANCEL_RECEIPT', payload: id });
-      navigate('/receipts');
-    }
-  }
-
   return (
     <div className="page-content">
       <div className="page-header">
@@ -105,14 +98,9 @@ export default function ReceiptForm() {
           </div>
         </div>
         {existing && existing.status !== 'done' && existing.status !== 'canceled' && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-success" onClick={handleValidate}>
-              <CheckCircle size={18} /> Validate Receipt
-            </button>
-            <button className="btn btn-danger" onClick={handleCancel}>
-              <XCircle size={18} /> Cancel Request
-            </button>
-          </div>
+          <button className="btn btn-success" onClick={handleValidate}>
+            <CheckCircle size={18} /> Validate Receipt
+          </button>
         )}
       </div>
 

@@ -11,7 +11,7 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     setError('');
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
@@ -27,17 +27,15 @@ export default function Signup() {
       return;
     }
     setLoading(true);
-    try {
-      const result = await signup(form.name, form.email, form.password, form.role);
+    setTimeout(() => {
+      const result = signup(form.name, form.email, form.password, form.role);
       if (result.success) {
         navigate('/');
       } else {
         setError(result.error);
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
-    }
-    setLoading(false);
+      setLoading(false);
+    }, 500);
   }
 
   return (
@@ -49,43 +47,52 @@ export default function Signup() {
       background: 'var(--color-bg-primary)',
       position: 'relative',
       overflow: 'hidden',
-      padding: '20px',
     }}>
       <div style={{
         position: 'absolute',
-        width: 600, height: 600, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(168, 85, 247, 0.04), transparent 60%)',
-        top: '-12%', left: '-8%',
-        animation: 'float 10s ease-in-out infinite',
+        width: 500,
+        height: 500,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12), transparent 60%)',
+        top: '-12%',
+        left: '-8%',
+        animation: 'float 7s ease-in-out infinite',
       }} />
       <div style={{
         position: 'absolute',
-        width: 450, height: 450, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(6, 182, 212, 0.03), transparent 60%)',
-        bottom: '-8%', right: '-5%',
-        animation: 'float 12s ease-in-out infinite reverse',
+        width: 400,
+        height: 400,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(14, 165, 233, 0.1), transparent 60%)',
+        bottom: '-8%',
+        right: '-5%',
+        animation: 'float 9s ease-in-out infinite reverse',
       }} />
 
       <div style={{
         width: '100%',
         maxWidth: 440,
-        animation: 'popIn 0.6s cubic-bezier(0.16,1,0.3,1)',
+        padding: '40px',
+        animation: 'fadeInUp 0.5s ease',
         position: 'relative',
         zIndex: 1,
       }}>
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{
-            width: 60, height: 60,
+            width: 56,
+            height: 56,
             borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(135deg, var(--color-accent), var(--color-secondary-accent))',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 20,
-            boxShadow: '0 4px 16px rgba(6,182,212,0.15)',
+            background: 'linear-gradient(135deg, var(--color-accent), #8b5cf6)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 16,
+            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
           }}>
             <Boxes size={28} color="white" />
           </div>
-          <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, fontFamily: 'var(--font-heading)', marginBottom: 6 }}>Create Account</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>Get started with CoreInventory IMS</p>
+          <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, marginBottom: 4 }}>Create Account</h1>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>Get started with StockFlow IMS</p>
         </div>
 
         <form onSubmit={handleSubmit} className="glass-card" style={{ padding: 32 }}>
@@ -97,8 +104,7 @@ export default function Signup() {
               color: 'var(--color-rose)',
               fontSize: 'var(--font-size-sm)',
               marginBottom: 20,
-              animation: 'elasticIn 0.3s ease',
-              border: '1px solid rgba(244, 63, 94, 0.2)',
+              animation: 'scaleIn 0.2s ease',
             }}>
               {error}
             </div>

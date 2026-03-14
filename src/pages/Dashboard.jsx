@@ -9,19 +9,63 @@ import {
 } from 'chart.js';
 import {
   Package, AlertTriangle, ShoppingCart, Truck, ArrowLeftRight,
-  TrendingUp, TrendingDown, Eye, Activity, BarChart3, Clock,
-  ArrowUpRight, Boxes,
+  TrendingUp, TrendingDown, Eye,
 } from 'lucide-react';
 import { getStockLevel, formatDate, getStatusLabel } from '../utils/helpers';
-import { useAuth } from '../contexts/AuthContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
+function KPICard({ icon: Icon, label, value, color, lightColor, trend, onClick }) {
+  return (
+    <div className="glass-card" onClick={onClick} style={{
+      padding: '20px 24px',
+      cursor: onClick ? 'pointer' : 'default',
+      animation: 'fadeInUp 0.4s ease',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-muted)',
+            marginBottom: 8,
+            fontWeight: 500,
+          }}>{label}</div>
+          <div className="stat-value" style={{ color }}>{value}</div>
+        </div>
+        <div style={{
+          width: 44,
+          height: 44,
+          borderRadius: 'var(--radius-md)',
+          background: lightColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Icon size={22} color={color} />
+        </div>
+      </div>
+      {trend !== undefined && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          marginTop: 12,
+          fontSize: 'var(--font-size-xs)',
+          color: trend >= 0 ? 'var(--color-emerald)' : 'var(--color-rose)',
+        }}>
+          {trend >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+          {Math.abs(trend)}% from last period
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const inv = useInventory();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [docFilter, setDocFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const stats = useMemo(() => {
     const totalProducts = inv.products.length;
@@ -33,19 +77,19 @@ export default function Dashboard() {
     const pendingReceipts = inv.receipts.filter(r => r.status !== 'done' && r.status !== 'canceled').length;
     const pendingDeliveries = inv.deliveries.filter(d => d.status !== 'done' && d.status !== 'canceled').length;
     const scheduledTransfers = inv.transfers.filter(t => t.status !== 'done' && t.status !== 'canceled').length;
-    const totalOps = inv.receipts.length + inv.deliveries.length + inv.transfers.length + inv.adjustments.length;
-    return { totalProducts, lowStock, outOfStock, pendingReceipts, pendingDeliveries, scheduledTransfers, totalOps };
+    return { totalProducts, lowStock, outOfStock, pendingReceipts, pendingDeliveries, scheduledTransfers };
   }, [inv]);
 
+  // Filtered history for activity table
   const filteredHistory = useMemo(() => {
     let history = [...inv.moveHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
     if (docFilter !== 'all') {
       history = history.filter(m => m.type === docFilter);
     }
-    return history.slice(0, 10);
+    return history.slice(0, 15);
   }, [inv.moveHistory, docFilter]);
 
-  // Chart data
+  // Chart: stock by category
   const categoryChart = useMemo(() => {
     const catMap = {};
     inv.products.forEach(p => {
@@ -57,181 +101,86 @@ export default function Dashboard() {
       labels: Object.keys(catMap),
       datasets: [{
         data: Object.values(catMap),
-        backgroundColor: ['#06b6d4', '#10b981', '#f59e0b', '#0ea5e9', '#f43f5e', '#a855f7'],
+        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#0ea5e9', '#f43f5e', '#8b5cf6'],
         borderWidth: 0,
-        hoverOffset: 6,
+        hoverOffset: 8,
       }],
     };
   }, [inv]);
 
+  // Chart: operations count
   const opsChart = useMemo(() => ({
     labels: ['Receipts', 'Deliveries', 'Transfers', 'Adjustments'],
     datasets: [{
       label: 'Total',
       data: [inv.receipts.length, inv.deliveries.length, inv.transfers.length, inv.adjustments.length],
-      backgroundColor: ['#06b6d480', '#10b98180', '#0ea5e980', '#f59e0b80'],
-      borderColor: ['#06b6d4', '#10b981', '#0ea5e9', '#f59e0b'],
+      backgroundColor: ['#6366f180', '#10b98180', '#0ea5e980', '#f59e0b80'],
+      borderColor: ['#6366f1', '#10b981', '#0ea5e9', '#f59e0b'],
       borderWidth: 2,
-      borderRadius: 6,
+      borderRadius: 8,
     }],
   }), [inv]);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
   return (
     <div className="page-content">
-      {/* Welcome Banner */}
-      <div style={{
-        padding: '28px 32px',
-        borderRadius: 'var(--radius-lg)',
-        background: 'linear-gradient(135deg, #0c1a35 0%, #112240 50%, #0d1f3c 100%)',
-        border: '1px solid var(--color-border)',
-        marginBottom: 24,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 24,
-        flexWrap: 'wrap',
-        animation: 'fadeInUp 0.4s ease',
-      }}>
+      <div className="page-header">
         <div>
-          <h1 style={{
-            fontFamily: 'var(--font-heading)', fontSize: 'var(--font-size-2xl)',
-            fontWeight: 700, marginBottom: 6,
-          }}>
-            {greeting}, {user?.name?.split(' ')[0] || 'there'} 👋
-          </h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-base)' }}>
-            Here's what's happening with your inventory today.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 24 }}>
-          {[
-            { label: 'Products', val: stats.totalProducts, icon: Boxes },
-            { label: 'Operations', val: stats.totalOps, icon: Activity },
-            { label: 'Alerts', val: stats.lowStock + stats.outOfStock, icon: AlertTriangle },
-          ].map((s, i) => (
-            <div key={i} style={{ textAlign: 'center', animation: `cascade-in 0.4s ease ${i * 80}ms both` }}>
-              <s.icon size={18} style={{ color: 'var(--color-accent)', marginBottom: 4 }} />
-              <div style={{
-                fontFamily: 'var(--font-heading)', fontSize: 'var(--font-size-xl)',
-                fontWeight: 700, color: 'var(--color-text-primary)',
-              }}>{s.val}</div>
-              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{s.label}</div>
-            </div>
-          ))}
+          <h1 className="page-title">Dashboard</h1>
+          <div className="page-subtitle">Overview of your inventory operations</div>
         </div>
       </div>
 
-      {/* Bento Grid — 3 columns */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gridAutoRows: 'auto',
-        gap: 20,
-        marginBottom: 24,
-      }}>
-        {/* Quick Action Cards — Span full first row */}
-        {[
-          { icon: ShoppingCart, label: 'Receipts', pending: stats.pendingReceipts, color: '#10b981', path: '/receipts', desc: 'pending inbound' },
-          { icon: Truck, label: 'Deliveries', pending: stats.pendingDeliveries, color: '#0ea5e9', path: '/deliveries', desc: 'pending outbound' },
-          { icon: ArrowLeftRight, label: 'Transfers', pending: stats.scheduledTransfers, color: '#a855f7', path: '/transfers', desc: 'scheduled' },
-        ].map((item, i) => (
-          <div key={i} onClick={() => navigate(item.path)} style={{
-            background: 'var(--color-bg-card)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '20px 24px',
-            cursor: 'pointer',
-            transition: 'all var(--transition-normal)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            animation: `cascade-in 0.4s ease ${(i + 3) * 60}ms both`,
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = item.color + '40';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 'var(--radius-md)',
-                background: item.color + '15',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <item.icon size={20} color={item.color} />
-              </div>
-              <div>
-                <div style={{
-                  fontFamily: 'var(--font-heading)', fontWeight: 600,
-                  fontSize: 'var(--font-size-base)',
-                }}>{item.label}</div>
-                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                  {item.pending} {item.desc}
-                </div>
-              </div>
-            </div>
-            <ArrowUpRight size={18} style={{ color: 'var(--color-text-muted)' }} />
-          </div>
-        ))}
+      {/* KPI Cards */}
+      <div className="grid-5" style={{ marginBottom: 28 }}>
+        <KPICard icon={Package} label="Total Products" value={stats.totalProducts}
+          color="var(--color-accent)" lightColor="var(--color-accent-light)" trend={12}
+          onClick={() => navigate('/products')} />
+        <KPICard icon={AlertTriangle} label="Low / Out of Stock" value={`${stats.lowStock + stats.outOfStock}`}
+          color="var(--color-amber)" lightColor="var(--color-amber-light)"
+          onClick={() => navigate('/products')} />
+        <KPICard icon={ShoppingCart} label="Pending Receipts" value={stats.pendingReceipts}
+          color="var(--color-emerald)" lightColor="var(--color-emerald-light)"
+          onClick={() => navigate('/receipts')} />
+        <KPICard icon={Truck} label="Pending Deliveries" value={stats.pendingDeliveries}
+          color="var(--color-sky)" lightColor="var(--color-sky-light)"
+          onClick={() => navigate('/deliveries')} />
+        <KPICard icon={ArrowLeftRight} label="Transfers Scheduled" value={stats.scheduledTransfers}
+          color="var(--color-violet)" lightColor="var(--color-violet-light)"
+          onClick={() => navigate('/transfers')} />
+      </div>
 
-        {/* Charts row — stock donut takes 1 col, operations bar takes 2 cols */}
-        <div style={{
-          background: 'var(--color-bg-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 24,
-          animation: 'cascade-in 0.5s ease 500ms both',
-        }}>
-          <h3 style={{
-            fontSize: 'var(--font-size-sm)', fontWeight: 700,
-            fontFamily: 'var(--font-heading)', marginBottom: 16,
-            textTransform: 'uppercase', letterSpacing: '0.05em',
-            color: 'var(--color-text-secondary)',
-          }}>Stock by Category</h3>
-          <div style={{ maxWidth: 220, margin: '0 auto' }}>
+      {/* Charts */}
+      <div className="grid-2" style={{ marginBottom: 28 }}>
+        <div className="glass-card" style={{ padding: 24 }}>
+          <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600, marginBottom: 20 }}>Stock by Category</h3>
+          <div style={{ maxWidth: 280, margin: '0 auto' }}>
             <Doughnut data={categoryChart} options={{
               responsive: true,
               plugins: {
                 legend: {
                   position: 'bottom',
-                  labels: { color: '#8b9cc0', padding: 12, usePointStyle: true, pointStyleWidth: 8, font: { size: 11 } },
+                  labels: { color: '#94a3b8', padding: 16, usePointStyle: true, pointStyleWidth: 8 },
                 },
               },
-              cutout: '68%',
+              cutout: '65%',
             }} />
           </div>
         </div>
-
-        <div style={{
-          gridColumn: 'span 2',
-          background: 'var(--color-bg-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: 24,
-          animation: 'cascade-in 0.5s ease 560ms both',
-        }}>
-          <h3 style={{
-            fontSize: 'var(--font-size-sm)', fontWeight: 700,
-            fontFamily: 'var(--font-heading)', marginBottom: 16,
-            textTransform: 'uppercase', letterSpacing: '0.05em',
-            color: 'var(--color-text-secondary)',
-          }}>Operations Overview</h3>
+        <div className="glass-card" style={{ padding: 24 }}>
+          <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600, marginBottom: 20 }}>Operations Overview</h3>
           <Bar data={opsChart} options={{
             responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+              legend: { display: false },
+            },
             scales: {
               y: {
                 beginAtZero: true,
-                ticks: { color: '#506080', stepSize: 1 },
-                grid: { color: 'rgba(100,140,200,0.06)' },
+                ticks: { color: '#64748b', stepSize: 1 },
+                grid: { color: 'rgba(148, 163, 184, 0.08)' },
               },
               x: {
-                ticks: { color: '#8b9cc0' },
+                ticks: { color: '#94a3b8' },
                 grid: { display: false },
               },
             },
@@ -239,25 +188,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Activity Timeline */}
-      <div style={{
-        background: 'var(--color-bg-card)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 24,
-        animation: 'cascade-in 0.5s ease 620ms both',
-      }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 20, flexWrap: 'wrap', gap: 12,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Clock size={18} style={{ color: 'var(--color-accent)' }} />
-            <h3 style={{
-              fontSize: 'var(--font-size-md)', fontWeight: 700,
-              fontFamily: 'var(--font-heading)',
-            }}>Recent Activity</h3>
-          </div>
+      {/* Filters + Recent Activity */}
+      <div className="glass-card" style={{ padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Recent Activity</h3>
           <div className="filter-bar" style={{ marginBottom: 0 }}>
             {['all', 'receipt', 'delivery', 'transfer', 'adjustment'].map(t => (
               <button
@@ -271,58 +205,47 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Timeline list instead of table */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {filteredHistory.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
-              No activity found
-            </div>
-          ) : (
-            filteredHistory.map((m, i) => (
-              <div key={m.id} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-md)',
-                transition: 'background var(--transition-fast)',
-                animation: `slide-in-right 0.3s ease ${i * 40}ms both`,
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-bg-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                {/* Type indicator dot */}
-                <div style={{
-                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                  background: m.type === 'receipt' ? '#10b981' : m.type === 'delivery' ? '#0ea5e9' : m.type === 'transfer' ? '#a855f7' : '#f59e0b',
-                }} />
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontWeight: 600, fontSize: 'var(--font-size-sm)',
-                    }}>{m.productName}</span>
-                    <span className={`badge badge-${m.type === 'receipt' ? 'done' : m.type === 'delivery' ? 'ready' : m.type === 'transfer' ? 'waiting' : 'draft'}`}>
-                      {m.type}
-                    </span>
-                  </div>
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2,
-                  }}>
-                    {m.reference} · {m.fromLocation || '—'} → {m.toLocation || '—'}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{
-                    fontWeight: 700, fontFamily: 'var(--font-heading)',
-                    fontSize: 'var(--font-size-sm)',
-                    color: m.quantity > 0 ? '#10b981' : '#f43f5e',
-                  }}>{m.quantity > 0 ? '+' : ''}{m.quantity}</div>
-                  <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                    {formatDate(m.date)}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+        <div style={{ overflow: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredHistory.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
+                    No activity found
+                  </td>
+                </tr>
+              ) : (
+                filteredHistory.map(m => (
+                  <tr key={m.id}>
+                    <td>
+                      <span className={`badge badge-${m.type === 'receipt' ? 'done' : m.type === 'delivery' ? 'ready' : m.type === 'transfer' ? 'waiting' : 'draft'}`}>
+                        {m.type}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 500, fontFamily: 'monospace' }}>{m.reference}</td>
+                    <td>{m.productName}</td>
+                    <td style={{ fontWeight: 600, color: m.quantity > 0 ? 'var(--color-emerald)' : 'var(--color-rose)' }}>
+                      {m.quantity > 0 ? '+' : ''}{m.quantity}
+                    </td>
+                    <td style={{ color: 'var(--color-text-secondary)' }}>{m.fromLocation || '—'}</td>
+                    <td style={{ color: 'var(--color-text-secondary)' }}>{m.toLocation || '—'}</td>
+                    <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>{formatDate(m.date)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

@@ -12,8 +12,12 @@ export default function Layout() {
     function handleResize() {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile) setSidebarCollapsed(false);
-      if (!mobile) setMobileOpen(false);
+      if (mobile) {
+        setSidebarCollapsed(false);
+      }
+      if (!mobile) {
+        setMobileOpen(false);
+      }
     }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -33,20 +37,16 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg-primary)' }}>
-      {/* Aurora animated background */}
-      <div className="aurora-bg" />
-
       {/* Mobile overlay backdrop */}
       {isMobile && mobileOpen && (
         <div
           onClick={closeMobileSidebar}
           style={{
             position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(2px)',
             zIndex: 99,
-            animation: 'fadeIn 0.25s ease',
+            animation: 'fadeIn 0.2s ease',
           }}
         />
       )}
@@ -67,8 +67,6 @@ export default function Layout() {
         flexDirection: 'column',
         minHeight: '100vh',
         width: isMobile ? '100%' : 'auto',
-        position: 'relative',
-        zIndex: 1,
       }}>
         <Header
           sidebarCollapsed={sidebarCollapsed}

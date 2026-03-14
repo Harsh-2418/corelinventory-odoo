@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../contexts/InventoryContext';
-import { Plus, ClipboardCheck, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, ClipboardCheck, CheckCircle } from 'lucide-react';
 import { formatDate, getStatusLabel } from '../utils/helpers';
 
 export default function Adjustments() {
@@ -19,13 +19,6 @@ export default function Adjustments() {
     e.stopPropagation();
     if (confirm('Validate this adjustment? Stock will be corrected.')) {
       inv.dispatch({ type: 'VALIDATE_ADJUSTMENT', payload: id });
-    }
-  }
-
-  function handleCancel(e, id) {
-    e.stopPropagation();
-    if (confirm('Cancel this adjustment? This action cannot be undone.')) {
-      inv.dispatch({ type: 'CANCEL_ADJUSTMENT', payload: id });
     }
   }
 
@@ -80,15 +73,10 @@ export default function Adjustments() {
                   <td><span className={`badge badge-${a.status}`}>{getStatusLabel(a.status)}</span></td>
                   <td style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>{formatDate(a.createdAt)}</td>
                   <td>
-                    {a.status !== 'done' && a.status !== 'canceled' && (
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, a.id)}>
-                          <CheckCircle size={14} /> Validate
-                        </button>
-                        <button className="btn btn-danger btn-sm" onClick={(e) => handleCancel(e, a.id)}>
-                          <XCircle size={14} /> Cancel
-                        </button>
-                      </div>
+                    {a.status !== 'done' && (
+                      <button className="btn btn-success btn-sm" onClick={(e) => handleValidate(e, a.id)}>
+                        <CheckCircle size={14} /> Validate
+                      </button>
                     )}
                   </td>
                 </tr>
